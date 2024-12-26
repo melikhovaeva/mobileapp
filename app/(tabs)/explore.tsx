@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FlatList, StyleSheet, Alert } from 'react-native';
 import WaterCalendar from '@/components/WaterCalendar';
 import AddWaterButtons from '@/components/AddWaterButtons';
@@ -7,18 +7,10 @@ import Progress from '@/components/Progress';
 import { useWaterContext } from '@/context/WaterContext';
 
 export default function ExploreScreen() {
-  const { waterGoal } = useWaterContext();
+  const { waterGoal, dailyRecords, setDailyRecords } = useWaterContext();
   const [waterConsumed, setWaterConsumed] = useState<number>(0);
   const [log, setLog] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [dailyRecords, setDailyRecords] = useState<Record<string, { consumed: number }>>({});
-
-  useEffect(() => {
-    if (waterGoal !== null) {
-      setWaterConsumed(0); // Сбрасываем прогресс при изменении цели
-      setLog([]); // Очищаем историю
-    }
-  }, [waterGoal]);
 
   const addWater = (amount: number) => {
     const newConsumed = (dailyRecords[selectedDate]?.consumed || 0) + amount;
@@ -27,7 +19,7 @@ export default function ExploreScreen() {
       [selectedDate]: { consumed: newConsumed },
     };
 
-    setDailyRecords(updatedDailyRecords);
+    setDailyRecords(updatedDailyRecords); // Сохраняем данные в контексте
     setWaterConsumed(newConsumed);
     setLog([...log, amount]);
 
