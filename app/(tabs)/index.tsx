@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import Button from '@/components/Button';
+import { FlatList, Alert, StyleSheet } from 'react-native';
+import WeightInputForm from '@/components/WeightInputForm';
+import WaterCalendar from '@/components/WaterCalendar';
+import AddWaterButtons from '@/components/AddWaterButtons';
 import LogItem from '@/components/LogItem';
 import Progress from '@/components/Progress';
 
@@ -26,10 +27,19 @@ export default function WaterTracker() {
       Alert.alert('Ошибка', 'Введите корректный вес!');
       return;
     }
+  
     const goal = weightNum * 30; // Норма воды: 30 мл на кг веса
-    setWaterGoal(goal);
-    setWaterConsumed(0); // Обнуляем прогресс
-    setLog([]); // Сбрасываем историю
+  
+    // Сбрасываем прогресс для текущей даты
+    const updatedDailyRecords = {
+      ...dailyRecords,
+      [selectedDate]: { consumed: 0 }, // Сбрасываем выпитую воду для выбранной даты
+    };
+  
+    setWaterGoal(goal); // Обновляем дневную норму
+    setDailyRecords(updatedDailyRecords); // Обновляем объект с данными
+    setWaterConsumed(0); // Обнуляем прогресс для отображения
+    setLog([]); // Сбрасываем локальную историю
   };
 
   const addWater = (amount: number) => {
@@ -37,18 +47,18 @@ export default function WaterTracker() {
       Alert.alert('Ошибка', 'Сначала рассчитайте норму воды!');
       return;
     }
-
+  
     const newConsumed = (dailyRecords[selectedDate]?.consumed || 0) + amount;
-
+  
     const updatedDailyRecords = {
       ...dailyRecords,
       [selectedDate]: { consumed: newConsumed },
     };
-
-    setDailyRecords(updatedDailyRecords); // Обновляем общий объект данных
-    setWaterConsumed(newConsumed); // Обновляем локальный прогресс для отображения
-    setLog([...log, amount]); // Добавляем в локальную историю
-
+  
+    setDailyRecords(updatedDailyRecords); // Обновляем объект данных
+    setWaterConsumed(newConsumed); // Обновляем локальный прогресс
+  
+    // Проверка достижения цели
     if (newConsumed >= waterGoal) {
       Alert.alert('Поздравляем!', `Вы достигли своей цели на ${selectedDate}!`);
     }
@@ -57,8 +67,8 @@ export default function WaterTracker() {
   const onDateChange = (day: Day) => {
     const selected = day.dateString;
     setSelectedDate(selected);
-    setWaterConsumed(dailyRecords[selected]?.consumed || 0); // Загружаем прогресс для выбранной даты
-    setLog([]); // Очищаем локальную историю для новой даты
+    setWaterConsumed(dailyRecords[selected]?.consumed || 0); 
+    setLog([]); 
   };
 
   return (
@@ -66,39 +76,18 @@ export default function WaterTracker() {
       data={log}
       keyExtractor={(item, index) => index.toString()}
       ListHeaderComponent={
-        <View style={styles.container}>
-          <Text style={styles.title}>Water Tracker</Text>
-
-          {/* Форма ввода веса */}
-          <View style={styles.form}>
-            <Text style={styles.label}>Введите ваш вес (в кг):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Например, 70"
-              keyboardType="numeric"
-              value={weight}
-              onChangeText={setWeight}
-            />
-            <Button text="Рассчитать норму воды" onPress={calculateWaterGoal} />
-          </View>
-
-          {/* Календарь */}
-          <Calendar
-            onDayPress={onDateChange}
-            markedDates={{
-              ...Object.keys(dailyRecords).reduce<Record<string, { selected?: boolean; marked?: boolean; selectedColor?: string; dotColor?: string }>>((acc, date) => {
-                acc[date] = {
-                  selected: date === selectedDate,
-                  marked: dailyRecords[date]?.consumed >= (waterGoal || 0),
-                  selectedColor: '#1E3A8A',
-                  dotColor: dailyRecords[date]?.consumed >= (waterGoal || 0) ? 'green' : 'red',
-                };
-                return acc;
-              }, {}),
-            }}
+        <>
+          <WeightInputForm
+            weight={weight}
+            setWeight={setWeight}
+            calculateWaterGoal={calculateWaterGoal}
           />
-
-          {/* Прогресс */}
+          <WaterCalendar
+            dailyRecords={dailyRecords}
+            selectedDate={selectedDate}
+            onDateChange={onDateChange}
+            waterGoal={waterGoal}
+          />
           {waterGoal && (
             <Progress
               goal={waterGoal}
@@ -106,16 +95,8 @@ export default function WaterTracker() {
               remaining={Math.max(waterGoal - waterConsumed, 0)}
             />
           )}
-
-          {/* Кнопки добавления воды */}
-          {waterGoal && (
-            <View style={styles.addWaterContainer}>
-              <Button text="+100 мл" onPress={() => addWater(100)} />
-              <Button text="+200 мл" onPress={() => addWater(200)} />
-              <Button text="+300 мл" onPress={() => addWater(300)} />
-            </View>
-          )}
-        </View>
+          {waterGoal && <AddWaterButtons addWater={addWater} />}
+        </>
       }
       renderItem={({ item, index }) => <LogItem index={index} amount={item} />}
     />
@@ -124,35 +105,8 @@ export default function WaterTracker() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 16,
     backgroundColor: '#F5F5F5',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E3A8A',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  form: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
-    color: '#4B5563',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 16,
-  },
-  addWaterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 24,
   },
 });

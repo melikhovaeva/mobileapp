@@ -26,6 +26,7 @@ const Progress: React.FC<ProgressProps> = ({ goal, consumed, remaining }) => {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
+    marginTop: 24,
     alignItems: 'center',
   },
   text: {
