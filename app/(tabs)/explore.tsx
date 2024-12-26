@@ -19,7 +19,7 @@ export default function ExploreScreen() {
       [selectedDate]: { consumed: newConsumed },
     };
 
-    setDailyRecords(updatedDailyRecords); // Сохраняем данные в контексте
+    setDailyRecords(updatedDailyRecords);
     setWaterConsumed(newConsumed);
     setLog([...log, amount]);
 
