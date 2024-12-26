@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, StyleSheet, Alert } from 'react-native';
 import WaterCalendar from '@/components/WaterCalendar';
 import AddWaterButtons from '@/components/AddWaterButtons';
@@ -7,11 +7,18 @@ import Progress from '@/components/Progress';
 import { useWaterContext } from '@/context/WaterContext';
 
 export default function ExploreScreen() {
-  const { waterGoal } = useWaterContext(); // Получаем дневную норму воды из контекста
-  const [waterConsumed, setWaterConsumed] = useState<number>(0); // Выпитая вода
-  const [log, setLog] = useState<number[]>([]); // История добавлений
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]); // Выбранная дата
-  const [dailyRecords, setDailyRecords] = useState<Record<string, { consumed: number }>>({}); // История по датам
+  const { waterGoal } = useWaterContext();
+  const [waterConsumed, setWaterConsumed] = useState<number>(0);
+  const [log, setLog] = useState<number[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dailyRecords, setDailyRecords] = useState<Record<string, { consumed: number }>>({});
+
+  useEffect(() => {
+    if (waterGoal !== null) {
+      setWaterConsumed(0); // Сбрасываем прогресс при изменении цели
+      setLog([]); // Очищаем историю
+    }
+  }, [waterGoal]);
 
   const addWater = (amount: number) => {
     const newConsumed = (dailyRecords[selectedDate]?.consumed || 0) + amount;
@@ -20,9 +27,9 @@ export default function ExploreScreen() {
       [selectedDate]: { consumed: newConsumed },
     };
 
-    setDailyRecords(updatedDailyRecords); // Обновляем данные
-    setWaterConsumed(newConsumed); // Обновляем прогресс
-    setLog([...log, amount]); // Добавляем в лог
+    setDailyRecords(updatedDailyRecords);
+    setWaterConsumed(newConsumed);
+    setLog([...log, amount]);
 
     if (waterGoal && newConsumed >= waterGoal) {
       Alert.alert('Поздравляем!', `Вы достигли своей цели на ${selectedDate}!`);
@@ -30,18 +37,15 @@ export default function ExploreScreen() {
   };
 
   const onDateChange = (day: { dateString: string }) => {
-    const selected = day.dateString;
-    setSelectedDate(selected);
-
-    // Загружаем данные для выбранной даты
-    setWaterConsumed(dailyRecords[selected]?.consumed || 0);
+    setSelectedDate(day.dateString);
+    setWaterConsumed(dailyRecords[day.dateString]?.consumed || 0);
     setLog([]);
   };
 
   return (
     <FlatList
       data={log}
-      keyExtractor={(item, index) => `${selectedDate}-${index}`} // Уникальный ключ для FlatList
+      keyExtractor={(item, index) => `${selectedDate}-${index}`}
       ListHeaderComponent={
         <>
           <WaterCalendar
