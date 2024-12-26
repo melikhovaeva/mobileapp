@@ -3,8 +3,8 @@ import React, { createContext, useState, ReactNode, useContext } from 'react';
 interface WaterContextProps {
   weight: string;
   setWeight: (value: string) => void;
-  waterGoal: number | null;
-  setWaterGoal: (value: number | null) => void;
+  waterGoal: number | null;  // Добавляем свойство waterGoal
+  setWaterGoal: (value: number | null) => void;  // Добавляем setWaterGoal
   dailyRecords: Record<string, { consumed: number }>;
   setDailyRecords: (records: Record<string, { consumed: number }>) => void;
 }
@@ -17,9 +17,7 @@ export const WaterProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [dailyRecords, setDailyRecords] = useState<Record<string, { consumed: number }>>({}); // История потребления воды
 
   return (
-    <WaterContext.Provider
-      value={{ weight, setWeight, waterGoal, setWaterGoal, dailyRecords, setDailyRecords }}
-    >
+    <WaterContext.Provider value={{ weight, setWeight, waterGoal, setWaterGoal, dailyRecords, setDailyRecords }}>
       {children}
     </WaterContext.Provider>
   );
