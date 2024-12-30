@@ -30,7 +30,7 @@ export default class WaterDatabase {
     if (results && results.length > 0) {
       const result = results[0];
       if (result.rows.length > 0) {
-        return result.rows.item(0); // Возвращаем первую запись
+        return result.rows.item(0); 
       }
     }
     return null;

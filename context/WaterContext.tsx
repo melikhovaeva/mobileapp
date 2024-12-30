@@ -1,12 +1,17 @@
 import React, { createContext, useState, ReactNode, useContext } from 'react';
 
+interface DailyRecord {
+  consumed: number;
+  goal: number;
+}
+
 interface WaterContextProps {
   weight: string;
   setWeight: (value: string) => void;
-  waterGoal: number | null;  // Добавляем свойство waterGoal
-  setWaterGoal: (value: number | null) => void;  // Добавляем setWaterGoal
-  dailyRecords: Record<string, { consumed: number }>;
-  setDailyRecords: (records: Record<string, { consumed: number }>) => void;
+  waterGoal: number | null;
+  setWaterGoal: (value: number | null) => void;
+  dailyRecords: Record<string, DailyRecord>;
+  setDailyRecords: (records: Record<string, DailyRecord>) => void;
 }
 
 const WaterContext = createContext<WaterContextProps | undefined>(undefined);
@@ -14,10 +19,19 @@ const WaterContext = createContext<WaterContextProps | undefined>(undefined);
 export const WaterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [weight, setWeight] = useState<string>(''); // Вес пользователя
   const [waterGoal, setWaterGoal] = useState<number | null>(null); // Норма воды
-  const [dailyRecords, setDailyRecords] = useState<Record<string, { consumed: number }>>({}); // История потребления воды
+  const [dailyRecords, setDailyRecords] = useState<Record<string, DailyRecord>>({}); // История потребления воды
 
   return (
-    <WaterContext.Provider value={{ weight, setWeight, waterGoal, setWaterGoal, dailyRecords, setDailyRecords }}>
+    <WaterContext.Provider
+      value={{
+        weight,
+        setWeight,
+        waterGoal,
+        setWaterGoal,
+        dailyRecords,
+        setDailyRecords,
+      }}
+    >
       {children}
     </WaterContext.Provider>
   );

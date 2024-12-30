@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, Dimensions, StyleSheet, Button, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Button } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useWaterContext } from '@/context/WaterContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function AnalysisScreen() {
+const AnalysisScreen = () => {
   const { dailyRecords } = useWaterContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('day');
 
-  // Функция для получения данных за выбранный период
-  const getDataForPeriod = (): { labels: string[]; data: number[] } => {
+  const getDataForPeriod = () => {
     const labels: string[] = [];
     const data: number[] = [];
 
@@ -42,12 +41,10 @@ export default function AnalysisScreen() {
   const { labels, data } = getDataForPeriod();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Анализ потребления воды</Text>
-
-      {/* Кнопки для переключения периодов */}
       <View style={styles.buttonsRow}>
-        <Button
+      <Button
           title="День"
           onPress={() => setSelectedPeriod('day')}
           color={selectedPeriod === 'day' ? '#1E90FF' : '#000'}
@@ -63,50 +60,45 @@ export default function AnalysisScreen() {
           color={selectedPeriod === 'month' ? '#1E90FF' : '#000'}
         />
       </View>
-
-      {/* Прокручиваемый график с фиксированным фоном */}
       <View style={styles.chartBackground}>
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false} // Скрываем индикатор прокрутки
-    contentContainerStyle={styles.chartScrollContainer}>
-    <LineChart
-      data={{
-        labels,
-        datasets: [
-          {
-            data,
-          },
-        ],
-      }}
-      width={Math.max(screenWidth, labels.length * 50)}
-      height={300}
-      yAxisSuffix=" мл"
-      chartConfig={{
-        backgroundColor: '#1E90FF',
-        backgroundGradientFrom: '#1E90FF',
-        backgroundGradientTo: '#1E90FF',
-        decimalPlaces: 0,
-        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-        propsForBackgroundLines: {
-          strokeWidth: 0.5,
-          strokeDasharray: '',
-          stroke: 'rgba(255, 255, 255, 0.2)',
-        },
-        propsForDots: {
-          r: '4',
-          strokeWidth: '2',
-          stroke: '#87CEFA',
-        },
-      }}
-      style={{
-        marginVertical: 8,
-        borderRadius: 16,
-      }}
-    />
-  </ScrollView>
-</View>
+      <ScrollView 
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chartScrollContainer}
+      >
+        <LineChart
+          data={{
+            labels,
+            datasets: [{ data }],
+          }}
+          width={Math.max(screenWidth, labels.length * 50)}
+          height={300}
+          yAxisSuffix=" мл"
+          chartConfig={{
+            backgroundColor: '#1E90FF',
+            backgroundGradientFrom: '#1E90FF',
+            backgroundGradientTo: '#1E90FF',
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            propsForBackgroundLines: {
+              strokeWidth: 0.5,
+              strokeDasharray: '',
+              stroke: 'rgba(255, 255, 255, 0.2)',
+            },
+            propsForDots: {
+              r: '4',
+              strokeWidth: '2',
+              stroke: '#87CEFA',
+            },
+          }}
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+          }}
+        />
+      </ScrollView>
+      </View>
 
       {/* История данных */}
       <View style={styles.history}>
@@ -122,35 +114,36 @@ export default function AnalysisScreen() {
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  contentContainer: {
     padding: 16,
+    backgroundColor: '#F5F5F5',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
     textAlign: 'center',
+    marginBottom: 16,
   },
   buttonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 16,
   },
-  chartBackground: {
-    backgroundColor: '#1E90FF', // Устанавливаем синий фон
-    borderRadius: 16,          // Закругляем углы
-    paddingVertical: 16,       // Добавляем отступы сверху и снизу
+  chart: {
+    marginVertical: 8,
   },
   chartScrollContainer: {
     alignItems: 'center',
     paddingHorizontal: 16,
+  },
+  chartBackground: {
+    backgroundColor: '#1E90FF',
+    borderRadius: 16,          
+    paddingVertical: 16,      
   },
   history: {
     marginTop: 16,
@@ -178,3 +171,5 @@ const styles = StyleSheet.create({
     maxHeight: 250,
   },
 });
+
+export default AnalysisScreen;
