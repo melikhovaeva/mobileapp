@@ -11,9 +11,6 @@ const ExploreScreen = () => {
     new Date().toISOString().split('T')[0]
   );
 
-  // Лог для отладки
-  console.log('Current Water Goal:', waterGoal);
-  console.log('Current Weight:', weight);
 
   useEffect(() => {
     const fetchRecords = async () => {
