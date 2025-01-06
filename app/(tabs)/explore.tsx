@@ -4,6 +4,7 @@ import AddWaterButtons from '@/components/AddWaterButtons';
 import WaterCalendar from '@/components/WaterCalendar';
 import { useWaterContext } from '@/context/WaterContext';
 import WaterDatabase from '@/backend/WaterDatabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ExploreScreen = () => {
   const { dailyRecords, setDailyRecords, waterGoal, weight } = useWaterContext();
@@ -11,24 +12,27 @@ const ExploreScreen = () => {
     new Date().toISOString().split('T')[0]
   );
 
-
   useEffect(() => {
     const fetchRecords = async () => {
       const db = new WaterDatabase();
       await db.init();
-      const allRecords = await db.getAllRecords();
 
-      console.log('Fetched Records:', allRecords);
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const stores = await AsyncStorage.multiGet(keys);
 
-      const recordsObject: Record<string, { consumed: number; goal: number }> = {};
-      allRecords.forEach((record) => {
-        recordsObject[record.date] = {
-          consumed: record.consumed,
-          goal: record.goal,
-        };
-      });
+        const recordsObject: Record<string, { consumed: number; goal: number }> = {};
+        stores.forEach(([key, value]) => {
+          if (value) {
+            recordsObject[key] = JSON.parse(value);
+          }
+        });
 
-      setDailyRecords(recordsObject);
+        console.log('Fetched Records:', recordsObject);
+        setDailyRecords(recordsObject);
+      } catch (error) {
+        console.error('Error fetching records:', error);
+      }
     };
 
     fetchRecords();

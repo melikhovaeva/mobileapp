@@ -1,58 +1,63 @@
-import SQLite from 'react-native-sqlite-storage';
-
-SQLite.DEBUG(true);
-SQLite.enablePromise(true);
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default class WaterDatabase {
-  private db: SQLite.SQLiteDatabase | null = null;
-
   async init(): Promise<void> {
-    if (!this.db) {
-      this.db = await SQLite.openDatabase({
-        name: 'WaterTracker.db',
-        location: 'default',
-      });
-    }
-
-    // Создаём таблицу, если её нет
-    await this.db.executeSql(
-      `CREATE TABLE IF NOT EXISTS records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT UNIQUE NOT NULL,
-        consumed INTEGER NOT NULL DEFAULT 0,
-        goal INTEGER NOT NULL DEFAULT 0
-      );`
-    );
+    console.log('Using AsyncStorage: No explicit init required');
   }
 
-  async getRecordByDate(date: string): Promise<{ consumed: number; goal: number } | null> {
-    const results = await this.db?.executeSql(`SELECT * FROM records WHERE date = ?`, [date]);
-    if (results && results.length > 0) {
-      const result = results[0];
-      if (result.rows.length > 0) {
-        return result.rows.item(0); 
-      }
+  async addRecord(date: string, consumed: number, goal: number): Promise<void> {
+    try {
+      const existingRecord = await this.getRecord(date);
+      const updatedRecord = {
+        consumed: (existingRecord?.consumed || 0) + consumed,
+        goal: existingRecord?.goal || goal,
+      };
+      await this.saveRecord(date, updatedRecord);
+    } catch (error) {
+      console.error('Error adding record:', error);
     }
-    return null;
   }
 
   async updateRecord(date: string, consumed: number, goal: number): Promise<void> {
-    await this.db?.executeSql(
-      `INSERT OR REPLACE INTO records (date, consumed, goal) VALUES (?, ?, ?)`,
-      [date, consumed, goal]
-    );
+    try {
+      const updatedRecord = { consumed, goal };
+      await this.saveRecord(date, updatedRecord);
+    } catch (error) {
+      console.error('Error updating record:', error);
+    }
   }
 
-  async getAllRecords(): Promise<{ date: string; consumed: number; goal: number }[]> {
-    const results = await this.db?.executeSql(`SELECT * FROM records`);
-    if (results && results.length > 0) {
-      const result = results[0];
-      const records: { date: string; consumed: number; goal: number }[] = [];
-      for (let i = 0; i < result.rows.length; i++) {
-        records.push(result.rows.item(i));
+  async getRecord(date: string): Promise<{ consumed: number; goal: number } | null> {
+    try {
+      const jsonValue = await AsyncStorage.getItem(date);
+      if (jsonValue != null) {
+        return JSON.parse(jsonValue);
+      } else {
+        console.error(`Record for ${date} not found`);
+        return null;
       }
-      return records;
+    } catch (error) {
+      console.error('Error retrieving record:', error);
+      return null;
     }
-    return [];
+  }
+
+  async deleteRecord(date: string): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(date);
+      console.log(`Record for ${date} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting record:', error);
+    }
+  }
+
+  async saveRecord(key: string, value: any): Promise<void> {
+    try {
+      const jsonValue = JSON.stringify(value);
+      await AsyncStorage.setItem(key, jsonValue);
+      console.log(`Record saved: ${key} = ${jsonValue}`);
+    } catch (error) {
+      console.error('Error saving record:', error);
+    }
   }
 }
