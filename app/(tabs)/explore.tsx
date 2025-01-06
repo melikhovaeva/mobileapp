@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Text } from 'react-native';
 import AddWaterButtons from '@/components/AddWaterButtons';
 import WaterCalendar from '@/components/WaterCalendar';
-import { useWaterContext } from '@/context/WaterContext';
+import { useWaterContext, DailyRecord } from '@/context/WaterContext';
 import WaterDatabase from '@/backend/WaterDatabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -21,10 +21,17 @@ const ExploreScreen = () => {
         const keys = await AsyncStorage.getAllKeys();
         const stores = await AsyncStorage.multiGet(keys);
 
-        const recordsObject: Record<string, { consumed: number; goal: number }> = {};
+        const recordsObject: Record<string, DailyRecord> = {};
         stores.forEach(([key, value]) => {
           if (value) {
-            recordsObject[key] = JSON.parse(value);
+            const parsedRecord = JSON.parse(value);
+
+            
+            recordsObject[key] = {
+              consumed: parsedRecord.consumed || 0,
+              goal: parsedRecord.goal || (weight ? parseFloat(weight) * 30 : 2000), 
+              weight: parsedRecord.weight || parseFloat(weight) || 70, // Задаем вес по умолчанию, если его нет
+            };
           }
         });
 
@@ -36,12 +43,12 @@ const ExploreScreen = () => {
     };
 
     fetchRecords();
-  }, []);
+  }, [weight]);
 
   const addWater = async (amount: number) => {
     const db = new WaterDatabase();
     const today = selectedDate;
-    const record = dailyRecords[today] || { consumed: 0, goal: waterGoal || 2000 };
+    const record = dailyRecords[today] || { consumed: 0, goal: waterGoal || 2000, weight: parseFloat(weight) || 70 };
 
     console.log(`Adding Water: ${amount} ml on ${today}`);
     console.log('Before Update:', dailyRecords[today]);
@@ -49,13 +56,13 @@ const ExploreScreen = () => {
     const updatedConsumed = record.consumed + amount;
     const updatedRecords = {
       ...dailyRecords,
-      [today]: { consumed: updatedConsumed, goal: record.goal },
+      [today]: { consumed: updatedConsumed, goal: record.goal, weight: record.weight },
     };
 
     setDailyRecords(updatedRecords);
     console.log('After Update:', updatedRecords);
 
-    await db.updateRecord(today, updatedConsumed, record.goal);
+    await db.updateRecord(today, updatedConsumed, record.goal, record.weight);
   };
 
   return (
@@ -76,7 +83,7 @@ const ExploreScreen = () => {
         </Text>
         {weight && (
           <Text style={styles.text}>
-            При весе: {weight} кг
+            При весе: {dailyRecords[selectedDate]?.weight || weight} кг
           </Text>
         )}
       </View>

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import WeightInputForm from '@/components/WeightInputForm';
 import { useWaterContext } from '@/context/WaterContext';
 
 const HomeScreen = () => {
-  const { weight, setWeight, calculateWaterGoal, waterGoal } = useWaterContext(); // Получаем данные и методы из контекста
+  const { weight, setWeight, calculateWaterGoal, waterGoal } = useWaterContext();
   const [message, setMessage] = useState<string>(''); 
+  const [previousWeight, setPreviousWeight] = useState<string>('');
+
   const handleCalculateGoal = async () => {
     const weightNum = parseFloat(weight);
     if (isNaN(weightNum) || weightNum <= 0) {
@@ -13,8 +15,11 @@ const HomeScreen = () => {
       return;
     }
 
+    setPreviousWeight(weight);
+
     await calculateWaterGoal();
-    setMessage(`Ваша дневная норма воды: ${waterGoal} мл`); 
+
+    setMessage(`Текущая дневная норма воды: ${weightNum * 30} мл`);
   };
 
   return (
@@ -25,7 +30,12 @@ const HomeScreen = () => {
         setWeight={setWeight}
         calculateWaterGoal={handleCalculateGoal}
       />
-      {message && <Text style={styles.result}>{message}</Text>}
+      {message && (
+        <Text style={styles.result}>
+          {message}{"\n"}
+          {previousWeight && `Последний расчет был при весе: ${previousWeight} кг`}
+        </Text>
+      )}
     </View>
   );
 };

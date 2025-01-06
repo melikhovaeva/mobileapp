@@ -1,16 +1,17 @@
 import React, { createContext, useState, ReactNode, useContext } from 'react';
 import WaterDatabase from '@/backend/WaterDatabase';
 
-interface DailyRecord {
+export interface DailyRecord {
   consumed: number;
   goal: number;
+  weight: number; // Добавлено поле веса
 }
 
 interface WaterContextProps {
   weight: string;
   setWeight: (value: string) => Promise<void>;
   waterGoal: number | null;
-  setWaterGoal: (value: number | null) => void; // Добавлено setWaterGoal
+  setWaterGoal: (value: number | null) => void;
   dailyRecords: Record<string, DailyRecord>;
   setDailyRecords: (records: Record<string, DailyRecord>) => void;
   calculateWaterGoal: (currentWeight?: string) => Promise<void>;
@@ -44,12 +45,20 @@ export const WaterProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // Обновляем или создаем запись в базе данных
     await db.init();
-    await db.updateRecord(today, dailyRecords[today]?.consumed || 0, goal);
+    const existingRecord = await db.getRecord(today);
+
+    const updatedRecord = {
+      consumed: existingRecord?.consumed || 0,
+      goal,
+      weight: weightNum, // Обновляем вес в записи
+    };
+
+    await db.updateRecord(today, updatedRecord.consumed, updatedRecord.goal, updatedRecord.weight);
 
     // Обновляем локальные данные
     const updatedRecords = {
       ...dailyRecords,
-      [today]: { consumed: dailyRecords[today]?.consumed || 0, goal },
+      [today]: updatedRecord,
     };
     setDailyRecords(updatedRecords);
   };
@@ -60,7 +69,7 @@ export const WaterProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         weight,
         setWeight,
         waterGoal,
-        setWaterGoal, // Передаем setWaterGoal в контекст
+        setWaterGoal,
         dailyRecords,
         setDailyRecords,
         calculateWaterGoal,

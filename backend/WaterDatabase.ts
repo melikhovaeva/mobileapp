@@ -5,12 +5,13 @@ export default class WaterDatabase {
     console.log('Using AsyncStorage: No explicit init required');
   }
 
-  async addRecord(date: string, consumed: number, goal: number): Promise<void> {
+  async addRecord(date: string, consumed: number, goal: number, weight: number): Promise<void> {
     try {
       const existingRecord = await this.getRecord(date);
       const updatedRecord = {
         consumed: (existingRecord?.consumed || 0) + consumed,
         goal: existingRecord?.goal || goal,
+        weight: existingRecord?.weight || weight,
       };
       await this.saveRecord(date, updatedRecord);
     } catch (error) {
@@ -18,16 +19,18 @@ export default class WaterDatabase {
     }
   }
 
-  async updateRecord(date: string, consumed: number, goal: number): Promise<void> {
+  async updateRecord(date: string, consumed: number, goal: number, weight: number): Promise<void> {
     try {
-      const updatedRecord = { consumed, goal };
+      const updatedRecord = { consumed, goal, weight };
       await this.saveRecord(date, updatedRecord);
     } catch (error) {
       console.error('Error updating record:', error);
     }
   }
 
-  async getRecord(date: string): Promise<{ consumed: number; goal: number } | null> {
+  async getRecord(
+    date: string
+  ): Promise<{ consumed: number; goal: number; weight: number } | null> {
     try {
       const jsonValue = await AsyncStorage.getItem(date);
       if (jsonValue != null) {
